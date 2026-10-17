@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wagulist — To-do list</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Tagalog&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style2.css">
+</head>
+
+<body>
+
+  <nav class="nav-bar">
+    <a class="logo" href="#">
+      <span id="logo-icon">✓</span>
+      <!-- Baybayin for "listahan" (list), written as character codes so it's readable in VS Code:
+           &#x170E;&#x1712; = li, &#x1710;&#x1714; = s, &#x1706; = ta, &#x1711; = ha, &#x1708;&#x1714; = n -->
+      <span class="logo-baybayin" lang="tl" title="Listahan (list)">&#x170E;&#x1712;&#x1710;&#x1714;&#x1706;&#x1711;&#x1708;&#x1714;</span>
+    </a>
+
+    <div class="nav-actions">
+      <button class="action-button" id="history-btn">History</button>
+      <button class="action-button">About the author</button>
+      <button class="action-button primary">Sign in</button>
+    </div>
+  </nav>
+
+  <main id="todo-container">
+
+    <!-- date and clock -->
+    <header class="date-header">
+      <div>
+        <div id="day"></div>
+        <div id="month"></div>
+      </div>
+      <div id="Clock"></div>
+    </header>
+
+    <div id="header" class="title-row">
+      <div>
+        <h1>My to-do list</h1>
+        <p class="subtitle">What do you want to get done today?</p>
+      </div>
+      <!-- daily streak (filled in by script22.js) -->
+      <div id="streak" class="streak" title="Days in a row you finished a task">
+        <span class="streak-fire">🔥</span>
+        <div>
+          <strong id="streak-count">0</strong>
+          <span id="streak-label">day streak</span>
+        </div>
+      </div>
+    </div>
+    <p id="streak-hint" class="streak-hint"></p>
+
+    <!-- a form so pressing Enter also adds the task -->
+    <form id="todo-form">
+      <input
+        type="text"
+        class="input-item"
+        name="input-item"
+        id="input-box"
+        placeholder="Add a task..."
+        autocomplete="off"
+      />
+      <button type="submit" id="input-button">+ Add</button>
+    </form>
+
+    <section class="list-section">
+      <div class="list-head">
+        <h2>Tasks</h2>
+        <span class="pill" id="total-pill">0</span>
+      </div>
+
+      <ul id="list-container"></ul>
+      <p id="empty-state">No tasks yet. Add one above ✨</p>
+    </section>
+
+    <footer class="counter-container">
+      <div class="progress"><div id="progress-bar"></div></div>
+      <div id="task-counter">
+        <span><i class="dot done"></i>Completed today: <strong id="completed-counter">0</strong></span>
+        <span><i class="dot pending"></i>Pending: <strong id="Uncompleted-counter">0</strong></span>
+      </div>
+    </footer>
+
+  </main>
+
+  <script src="streak.js"></script>
+  <script src="script22.js"></script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wagulist — History</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Tagalog&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style2.css">
+</head>
+
+<body>
+
+  <nav class="nav-bar">
+    <a class="logo" href="index.html">
+      <span id="logo-icon">✓</span>
+  
+      <!-- Baybayin for "listahan" (list), written as character codes so it's readable in VS Code:
+           &#x170E;&#x1712; = li, &#x1710;&#x1714; = s, &#x1706; = ta, &#x1711; = ha, &#x1708;&#x1714; = n -->
+      <span class="logo-baybayin" lang="tl" title="Listahan (list)">&#x170E;&#x1712;&#x1710;&#x1714;&#x1706;&#x1711;&#x1708;&#x1714;</span>
+    </a>
+
+    <div class="nav-actions">
+      <!--<a class="action-button" href="index.html">My tasks</a> -->
+      <button class="action-button">About the author</button>
+      <button class="action-button primary">Sign in</button>
+    </div>
+  </nav>
+
+  <main id="todo-container">
+
+    <a class="back-link" href="Todolist.html">← Back to tasks</a>
+
+    <div id="header" class="history-header">
+      <div>
+        <h1>History</h1>
+        <p class="subtitle">Every task you've made, and what happened to it.</p>
+      </div>
+      <button id="clear-history" class="clear-btn">Clear history</button>
+    </div>
+
+    <!-- streak + last 7 days -->
+    <section class="streak-card">
+      <div class="streak-main">
+        <span class="streak-fire big">🔥</span>
+        <div>
+          <strong id="streak-current">0</strong> <span class="unit">day streak</span>
+          <p id="streak-best" class="streak-sub">Best: 0 days</p>
+        </div>
+      </div>
+      <div class="week" id="week"></div>
+    </section>
+
+    <!-- quick stats -->
+    <div class="stats">
+      <div class="stat"><strong id="stat-total">0</strong><span>Tasks made</span></div>
+      <div class="stat"><strong id="stat-done">0</strong><span>Completed</span></div>
+      <div class="stat"><strong id="stat-pending">0</strong><span>Pending</span></div>
+    </div>
+
+    <!-- how to organize the list -->
+    <div class="history-tools">
+      <div class="tool-group">
+        <span class="tool-label">Group by</span>
+        <div class="filters" id="group-by">
+          <button class="filter active" data-group="added">Day added</button>
+          <button class="filter" data-group="done">Day done</button>
+        </div>
+      </div>
+      <div class="tool-group">
+        <span class="tool-label">Date</span>
+        <div class="date-wrap">
+          <input type="date" id="date-filter" class="search date-input">
+          <button id="clear-date" class="clear-date" title="Show all dates" hidden>✕</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="history-tools">
+      <div class="filters" id="filters">
+        <button class="filter active" data-filter="all">All</button>
+        <button class="filter" data-filter="pending">Pending</button>
+        <button class="filter" data-filter="done">Done</button>
+        <button class="filter" data-filter="deleted">Deleted</button>
+      </div>
+      <input type="search" id="search" class="search" placeholder="Search tasks...">
+    </div>
+
+    <!-- filled in by history.js, grouped by the day each task was made -->
+    <div id="history-list"></div>
+    <p id="empty-state">No tasks yet. Make one on the main page ✨</p>
+
+  </main>
+
+  <script src="streak.js"></script>
+  <script src="history.js"></script>
+</body>
+</html>
