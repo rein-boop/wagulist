@@ -357,6 +357,8 @@ function buildModal(){
       <h2 id="auth-title" class="auth-title"></h2>
       <p class="auth-sub"></p>
 
+      <div class="auth-reason" hidden></div>
+
       <div class="auth-setup" hidden>
         Sign-in isn't connected yet. <strong>Site owner:</strong> add your Firebase settings to <code>firebase-config.js</code>.
       </div>
@@ -391,7 +393,7 @@ function buildModal(){
             <button type="button" class="link-btn only-signin forgot-btn">Forgot password?</button>
           </div>
           <div class="password-wrap">
-            <input id="auth-password" type="password" autocomplete="current-password" placeholder="••••••••">
+            <input id="auth-password" type="password" autocomplete="current-password" placeholder="Your password">
             <button type="button" class="show-pw" aria-label="Show password">Show</button>
           </div>
         </div>
@@ -470,6 +472,7 @@ function setMode(next){
   modal.dataset.mode = mode;
   modal.querySelectorAll(".auth-tab").forEach(t => t.setAttribute("aria-selected", t.dataset.mode === mode));
   $("#auth-password").autocomplete = mode === "signup" ? "new-password" : "current-password";
+  $("#auth-password").placeholder = mode === "signup" ? "At least 8 characters" : "Your password";
   showError("");
   $(".auth-success").textContent = "";
   updateStrength();
@@ -479,9 +482,12 @@ function setMode(next){
   setTimeout(() => (first.value ? $("#auth-email") : first).focus(), 30);
 }
 
-function openModal(which){
+function openModal(which, reason = ""){
   if (!modal) buildModal();
   modal.querySelector(".auth-setup").hidden = configured;
+  const reasonBox = modal.querySelector(".auth-reason");
+  reasonBox.textContent = reason;   // e.g. "You've used your 3 free guest tasks..."
+  reasonBox.hidden = !reason;
   modal.hidden = false;
   document.body.classList.add("modal-open");
   setMode(which);
@@ -624,6 +630,20 @@ function showToast(message){
 }
 
 
+// ---------- for the other scripts (script22.js) ----------
+// isSignedIn() also counts a remembered sign-in, so a signed-in person
+// isn't asked to sign in again during the second it takes Firebase to load.
+window.wagulistAuth = {
+  enabled: configured,
+  isSignedIn: () => !!user || !!localStorage.getItem(UID_KEY),
+  open: (which, reason) => openModal(which, reason),
+};
+
+function announce(name){
+  window.dispatchEvent(new CustomEvent(name));
+}
+
+
 // ---------- start ----------
 renderNav();
 
@@ -649,10 +669,12 @@ const ready = (async () => {
     const wasSignedIn = !!user;
     user = u;
     renderNav();
+    announce("wagulist:auth-changed");
 
     if (u){
       if (!wasSignedIn && !firstCheck) showToast(`Signed in as ${u.displayName || u.email} ✓ Your tasks now sync across devices.`);
       await startSync(u);
+      announce("wagulist:signed-in");   // e.g. add the task they typed before signing in
     } else {
       stopSync();
       // signed out somewhere else (or session ended): don't leave the account's data behind
