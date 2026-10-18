@@ -376,6 +376,170 @@ function updateclock(){
   datenow.innerHTML = `${hours}:${minutes}<span class="sec">:${seconds}</span><span class="ampm">${ampm}</span>`;
   Day.textContent = now.toLocaleDateString("en-US", { weekday: "long" });
   Mont.textContent = now.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+
+  checkNewDay(); // did midnight just pass?
+}
+
+
+// =====================================================================
+// ===== New day greeting: "A new day has arrived, what do you want to do today?"
+// =====================================================================
+const LAST_DAY_KEY = "wagulist-last-day"; // the last day this browser opened Wagulist
+
+function todayKey(date = new Date()){
+  return date.toLocaleDateString("en-CA"); // "2026-10-19"
+}
+
+let shownDay = todayKey(); // the day the page is currently showing
+
+function checkNewDay(){
+  const today = todayKey();
+  if (today === shownDay) return;
+  shownDay = today;
+  // midnight passed while the page was open: reset "Completed today", the streak, etc.
+  updateCounters();
+  startNewDay();
+}
+
+// show the greeting once per day
+function startNewDay(){
+  const today = todayKey();
+  let lastDay = null;
+  try { lastDay = localStorage.getItem(LAST_DAY_KEY); localStorage.setItem(LAST_DAY_KEY, today); } catch (e) {}
+  if (lastDay === today) return;   // already greeted today
+  if (!lastDay) return;            // very first visit: no "new day" yet
+
+  showNewDayCard();
+  notifyNewDay();
+}
+
+function greetingFor(hour){
+  if (hour < 5) return ["Hello, night owl", "🌙"];
+  if (hour < 12) return ["Good morning", "☀️"];
+  if (hour < 18) return ["Good afternoon", "🌤️"];
+  return ["Good evening", "🌆"];
+}
+
+// what happened yesterday, for the little summary
+function yesterdaySummary(){
+  const y = new Date();
+  y.setDate(y.getDate() - 1);
+  const yKey = todayKey(y);
+  const doneYesterday = load(LOG_KEY).filter(e => e.done && e.completedAt && todayKey(new Date(e.completedAt)) === yKey).length;
+  const streak = streakInfo();
+  return { doneYesterday, carriedOver: tasks.length, streak: streak.current };
+}
+
+function showNewDayCard(){
+  if (document.getElementById("newday")) return;
+
+  const now = new Date();
+  const [hello, icon] = greetingFor(now.getHours());
+  const name = (window.wagulistAuth && window.wagulistAuth.name && window.wagulistAuth.name()) || "";
+  const { doneYesterday, carriedOver, streak } = yesterdaySummary();
+
+  const overlay = document.createElement("div");
+  overlay.id = "newday";
+  overlay.className = "newday-overlay";
+  overlay.innerHTML = `
+    <div class="newday-card" role="dialog" aria-modal="true" aria-labelledby="newday-title">
+      <button type="button" class="newday-close" aria-label="Close">✕</button>
+      <div class="newday-sun">${icon}</div>
+      <p class="newday-date"></p>
+      <h2 id="newday-title" class="newday-title"></h2>
+      <p class="newday-sub">A new day has arrived. What do you want to do today?</p>
+
+      <div class="newday-stats"></div>
+
+      <form class="newday-form">
+        <input type="text" class="newday-input" placeholder="Today I want to..." autocomplete="off" maxlength="200">
+        <button type="submit" class="newday-add">Add</button>
+      </form>
+      <ul class="newday-added"></ul>
+
+      <div class="newday-footer">
+        <button type="button" class="newday-remind" hidden>🔔 Remind me every new day</button>
+        <button type="button" class="newday-done">Let's go!</button>
+      </div>
+    </div>`;
+
+  overlay.querySelector(".newday-date").textContent =
+    now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+  overlay.querySelector(".newday-title").textContent = name ? `${hello}, ${name}!` : `${hello}!`;
+
+  // small recap of yesterday
+  const stats = overlay.querySelector(".newday-stats");
+  const chips = [];
+  if (doneYesterday > 0) chips.push(`✅ Yesterday you finished ${doneYesterday} task${doneYesterday === 1 ? "" : "s"}`);
+  if (carriedOver > 0) chips.push(`📌 ${carriedOver} task${carriedOver === 1 ? "" : "s"} still on your list`);
+  if (streak > 0) chips.push(`🔥 ${streak}-day streak, finish one today to keep it going`);
+  if (!chips.length) chips.push("✨ Fresh start. Add your first task below");
+  chips.forEach(text => {
+    const chip = document.createElement("span");
+    chip.className = "newday-chip";
+    chip.textContent = text;
+    stats.appendChild(chip);
+  });
+
+  const input = overlay.querySelector(".newday-input");
+  const added = overlay.querySelector(".newday-added");
+
+  // add a task straight from the greeting (uses the normal addTask, so the guest limit still applies)
+  overlay.querySelector(".newday-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (!text){ input.focus(); return; }
+    const before = tasks.length;
+    inputBox.value = text;
+    addTask();
+    if (tasks.length > before){
+      const li = document.createElement("li");
+      li.textContent = "✓ " + text;
+      added.appendChild(li);
+      input.value = "";
+      input.focus();
+    } else {
+      close(); // guest limit reached: the sign-up window is open now
+    }
+  });
+
+  // browser notifications switch
+  const remind = overlay.querySelector(".newday-remind");
+  if ("Notification" in window && Notification.permission === "default"){
+    remind.hidden = false;
+    remind.addEventListener("click", async () => {
+      const result = await Notification.requestPermission();
+      remind.textContent = result === "granted" ? "🔔 Reminders on ✓" : "Reminders are blocked in your browser";
+      remind.disabled = true;
+    });
+  }
+
+  function close(){
+    overlay.classList.add("closing");
+    setTimeout(() => overlay.remove(), 200);
+    document.removeEventListener("keydown", onKey);
+  }
+  function onKey(e){ if (e.key === "Escape") close(); }
+
+  overlay.querySelector(".newday-close").addEventListener("click", close);
+  overlay.querySelector(".newday-done").addEventListener("click", close);
+  overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) close(); });
+  document.addEventListener("keydown", onKey);
+
+  document.body.appendChild(overlay);
+  setTimeout(() => input.focus(), 50);
+}
+
+// a system notification, when the tab is in the background and reminders are on
+function notifyNewDay(){
+  if (!("Notification" in window) || Notification.permission !== "granted" || !document.hidden) return;
+  try {
+    const n = new Notification("A new day has arrived ☀️", {
+      body: "What do you want to do today? Open Wagulist to plan your day.",
+      tag: "wagulist-new-day", // replaces an older one instead of stacking
+    });
+    n.onclick = () => { window.focus(); n.close(); };
+  } catch (e) { /* some phones only allow notifications from installed apps */ }
 }
 
 
@@ -413,5 +577,7 @@ window.addEventListener("wagulist:signed-in", () => {
 });
 
 updateclock(); // show the time right away instead of waiting 1 second
+// greet the user if this is their first visit today (wait a moment so the account name can load)
+setTimeout(startNewDay, 900);
 setInterval(updateclock, 1000);
 updateCounters();
