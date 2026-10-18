@@ -40,7 +40,7 @@ body {
      (if the image is missing, the purple-black color shows instead) */
   background:
     linear-gradient(rgba(12, 10, 24, 0.55), rgba(12, 10, 24, 0.8)),
-    url("miku.jpg") center / cover fixed,
+    url("quintupletss.jpg") center / cover fixed,
     #1a1530;
   -webkit-font-smoothing: antialiased;
 }
@@ -1414,3 +1414,25 @@ body.modal-open { overflow: hidden; }
   .auth-modal { padding: 28px 20px 20px; }
   .account-menu { width: min(280px, calc(100vw - 32px)); }
 }
+
+/* ===== Guest limit ===== */
+.guest-hint {
+  margin: 8px 2px 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.guest-hint[hidden] { display: none; }
+
+.auth-reason {
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--accent-soft);
+  border: 1px solid rgba(124, 58, 237, 0.35);
+  border-radius: 10px;
+}
+
+.auth-reason[hidden] { display: none; }
