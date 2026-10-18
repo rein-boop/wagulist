@@ -636,6 +636,7 @@ function showToast(message){
 window.wagulistAuth = {
   enabled: configured,
   isSignedIn: () => !!user || !!localStorage.getItem(UID_KEY),
+  name: () => (user && (user.displayName || (user.email || "").split("@")[0])) || "",
   open: (which, reason) => openModal(which, reason),
 };
 
