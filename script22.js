@@ -79,8 +79,56 @@ function redirect(){
 }
 
 
+// ===== Guest limit: try a few tasks, then sign in / sign up to keep going =====
+const GUEST_LIMIT = 3;
+
+function guestMustSignIn(){
+  const authOn = window.wagulistAuth && window.wagulistAuth.enabled; // off until Firebase is set up
+  return authOn && !window.wagulistAuth.isSignedIn();
+}
+
+function guestTasksUsed(){
+  return load(LOG_KEY).length; // every task made in this browser as a guest
+}
+
+// "2 of 3 free tasks left" line under the input box
+function updateGuestHint(){
+  let hint = document.getElementById("guest-hint");
+  if (!hint){
+    hint = document.createElement("p");
+    hint.id = "guest-hint";
+    hint.className = "guest-hint";
+    todoForm.after(hint);
+  }
+
+  if (!guestMustSignIn()){ hint.hidden = true; return; }
+  hint.hidden = false;
+
+  const left = Math.max(0, GUEST_LIMIT - guestTasksUsed());
+  hint.innerHTML = "";
+  hint.append(left > 0
+    ? `Guest mode: ${left} of ${GUEST_LIMIT} free task${left === 1 ? "" : "s"} left. `
+    : "You've used your free guest tasks. ");
+  const link = document.createElement("button");
+  link.type = "button";
+  link.className = "link-btn";
+  link.textContent = left > 0 ? "Sign up to save them" : "Sign up to keep adding";
+  link.addEventListener("click", () => window.wagulistAuth.open("signup"));
+  hint.append(link);
+}
+
+let waitingTask = false; // a task typed before signing in, to add right after
+
 function addTask() {
   const text = inputBox.value.trim(); // get the value of the input box
+
+  // guests get a few tasks, then need an account
+  if (text && guestMustSignIn() && guestTasksUsed() >= GUEST_LIMIT){
+    waitingTask = true; // keep what they typed
+    window.wagulistAuth.open("signup",
+      `You've used your ${GUEST_LIMIT} free guest tasks. Create a free account (or sign in) to keep adding. Your tasks come with you.`);
+    return;
+  }
 
   if (!text) {
     // shake the box instead of a popup
@@ -294,6 +342,7 @@ function updateCounters(){
   emptyState.hidden = tasks.length > 0; // show "No tasks yet" only when the list is empty
   emptyState.textContent = completedTasks > 0 ? "All done for now! 🎉" : "No tasks yet. Add one above ✨";
   updateStreak();
+  updateGuestHint();
 }
 
 
@@ -351,6 +400,16 @@ renderTasks();
 window.addEventListener("wagulist:data-changed", () => {
   tasks = load(TASKS_KEY);
   renderTasks();
+});
+
+// signed in/out: update the "free tasks left" line
+window.addEventListener("wagulist:auth-changed", updateGuestHint);
+
+// just signed in after hitting the guest limit: add the task they had typed
+window.addEventListener("wagulist:signed-in", () => {
+  updateGuestHint();
+  if (waitingTask && inputBox.value.trim()) addTask();
+  waitingTask = false;
 });
 
 updateclock(); // show the time right away instead of waiting 1 second
