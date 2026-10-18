@@ -40,7 +40,7 @@ body {
      (if the image is missing, the purple-black color shows instead) */
   background:
     linear-gradient(rgba(12, 10, 24, 0.55), rgba(12, 10, 24, 0.8)),
-    url("quintupletss.jpg") center / cover fixed,
+    url("miku.jpg") center / cover fixed,
     #1a1530;
   -webkit-font-smoothing: antialiased;
 }
