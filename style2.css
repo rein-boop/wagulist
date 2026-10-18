@@ -40,7 +40,7 @@ body {
      (if the image is missing, the purple-black color shows instead) */
   background:
     linear-gradient(rgba(12, 10, 24, 0.55), rgba(12, 10, 24, 0.8)),
-    url("miku.jpg") center / cover fixed,
+    url("quintupletss.jpg") center / cover fixed,
     #1a1530;
   -webkit-font-smoothing: antialiased;
 }
@@ -886,4 +886,124 @@ li.task.removing { transition: opacity 0.3s, transform 0.3s; }
 
 @media (max-width: 400px) {
   .logo-baybayin { font-size: 15px; padding-left: 8px; }
+}
+
+/* ===== History: edit + journal notes ===== */
+.history-item { flex-wrap: wrap; }
+
+.history-actions {
+  display: flex;
+  gap: 2px;
+  margin-left: -4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.history-item:hover .history-actions,
+.history-item:focus-within .history-actions,
+.history-item.editing .history-actions { opacity: 1; }
+
+.note-btn:hover { color: #f59e0b; background: rgba(245, 158, 11, 0.12); }
+.history-item.has-note .note-btn { color: #f59e0b; } /* shows which tasks have a note */
+
+/* the note under a task */
+.history-note {
+  flex-basis: 100%;
+  margin: 4px 0 2px 34px;               /* lines up with the task text */
+  padding: 10px 12px;
+  background: rgba(245, 158, 11, 0.08);
+  border-left: 3px solid #f59e0b;
+  border-radius: 0 8px 8px 0;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.history-note:hover { background: rgba(245, 158, 11, 0.14); }
+
+.note-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text);
+  white-space: pre-wrap;                /* keep the line breaks you typed */
+  overflow-wrap: anywhere;
+}
+
+.note-time {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.note-time:empty { display: none; }
+.history-item.editing .history-note { display: none; }
+
+/* the editor */
+.history-editor {
+  flex-basis: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0 2px 34px;
+  padding: 12px;
+  background: var(--row-hover);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  animation: slide-in 0.15s ease-out;
+}
+
+.editor-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.editor-name,
+.editor-note {
+  width: 100%;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--row);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+}
+
+.editor-note { resize: vertical; min-height: 90px; line-height: 1.5; }
+.editor-name:focus,
+.editor-note:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.editor-hint { margin-right: auto; font-size: 11px; color: var(--muted); }
+
+.editor-cancel,
+.editor-save {
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.editor-cancel { color: var(--muted); background: none; border: 1px solid var(--border); }
+.editor-cancel:hover { color: var(--text); }
+.editor-save { color: white; background: var(--accent); border: none; }
+.editor-save:hover { background: var(--accent-hover); }
+
+@media (max-width: 560px) {
+  .history-actions { opacity: 1; }
+  .history-note, .history-editor { margin-left: 0; }
+  .editor-hint { display: none; }
 }
