@@ -16,16 +16,17 @@
   <nav class="nav-bar">
     <a class="logo" href="index.html">
       <span id="logo-icon">✓</span>
-  
+      Wagulist
       <!-- Baybayin for "listahan" (list), written as character codes so it's readable in VS Code:
            &#x170E;&#x1712; = li, &#x1710;&#x1714; = s, &#x1706; = ta, &#x1711; = ha, &#x1708;&#x1714; = n -->
       <span class="logo-baybayin" lang="tl" title="Listahan (list)">&#x170E;&#x1712;&#x1710;&#x1714;&#x1706;&#x1711;&#x1708;&#x1714;</span>
     </a>
 
     <div class="nav-actions">
-      <!--<a class="action-button" href="index.html">My tasks</a> -->
+      <a class="action-button" href="index.html">My tasks</a>
       <button class="action-button">About the author</button>
-      <button class="action-button primary">Sign in</button>
+      <!-- Sign in / Sign up buttons, or your account menu (filled in by auth.js) -->
+      <div id="auth-area" class="auth-area"></div>
     </div>
   </nav>
 
@@ -36,7 +37,7 @@
     <div id="header" class="history-header">
       <div>
         <h1>History</h1>
-        <p class="subtitle">Every task you've made. .Add a note in each task to RELAPSE what happened during that day</p>
+        <p class="subtitle">Every task you've made, and what happened to it.</p>
       </div>
       <button id="clear-history" class="clear-btn">Clear history</button>
     </div>
@@ -96,5 +97,6 @@
 
   <script src="streak.js"></script>
   <script src="history.js"></script>
+  <script type="module" src="auth.js"></script>
 </body>
 </html>
