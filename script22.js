@@ -57,6 +57,13 @@ function updateLog(id, changes){
   if (changed) save(TASKS_KEY, tasks);
 })();
 
+// streak.js gives us getStreak(). If that file isn't loaded, don't crash, just skip the streak.
+function streakInfo(){
+  return typeof getStreak === "function"
+    ? getStreak()
+    : { current: 0, best: 0, doneToday: false, days: new Set() };
+}
+
 function makeId(){
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
@@ -137,7 +144,7 @@ function createTaskElement(task){
     if (!checkbox.checked) return;
 
     // marked done -> record it in the history, then remove it from the list
-    const before = getStreak();
+    const before = streakInfo();
     task.done = true;
     task.completedAt = new Date().toISOString();
     updateLog(task.id, { done: true, completedAt: task.completedAt });
@@ -156,13 +163,13 @@ function createTaskElement(task){
       }, 300);
     }, 1000);
 
-    const after = getStreak();
-    const message = !before.doneToday
+    const after = streakInfo();
+    const message = !before.doneToday && after.current > 0
       ? `🔥 ${after.current}-day streak! "${task.text}" done`   // first task today
       : `"${task.text}" done ✓`;
     updateStreak();
-    if (!before.doneToday){
-      const chip = document.getElementById("streak");
+    const chip = document.getElementById("streak");
+    if (!before.doneToday && chip){
       chip.classList.remove("bump");
       void chip.offsetWidth; // restart the animation
       chip.classList.add("bump");
@@ -292,9 +299,11 @@ function updateCounters(){
 
 // the 🔥 chip next to the title
 function updateStreak(){
-  const { current, doneToday } = getStreak();
   const chip = document.getElementById("streak");
   const hint = document.getElementById("streak-hint");
+  if (!chip || !hint) return; // this page has no streak chip
+
+  const { current, doneToday } = streakInfo();
 
   document.getElementById("streak-count").textContent = current;
   chip.classList.toggle("active", doneToday);      // bright when today counts
@@ -337,6 +346,12 @@ if (tasks.some(t => t.done)){
 
 // show saved tasks when the page opens
 renderTasks();
+
+// signing in/out, or a change made on another device (auth.js), updates the saved data: redraw
+window.addEventListener("wagulist:data-changed", () => {
+  tasks = load(TASKS_KEY);
+  renderTasks();
+});
 
 updateclock(); // show the time right away instead of waiting 1 second
 setInterval(updateclock, 1000);
