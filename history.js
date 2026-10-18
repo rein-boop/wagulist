@@ -328,4 +328,15 @@ function renderAll(){
 // if you change tasks in another tab, update this page too
 window.addEventListener("storage", (e) => { if (e.key === LOG_KEY) renderAll(); });
 
+// signing in/out, or a change from another device (auth.js): redraw,
+// but wait if you're in the middle of writing a note
+let refreshWaiting = false;
+window.addEventListener("wagulist:data-changed", () => {
+  if (document.querySelector(".history-editor")){ refreshWaiting = true; return; }
+  renderAll();
+});
+document.addEventListener("click", (e) => {
+  if (refreshWaiting && e.target.closest(".editor-cancel")){ refreshWaiting = false; setTimeout(renderAll, 0); }
+});
+
 renderAll();
