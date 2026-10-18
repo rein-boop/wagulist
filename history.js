@@ -10,6 +10,11 @@ const groupButtons = document.querySelectorAll("#group-by .filter");
 const LOG_KEY = "wagulist-log";     // every task ever made (script22.js saves it)
 const TASKS_KEY = "wagulist-tasks"; // the tasks currently on the main page
 
+// streak.js normally provides these; fallbacks so the page still works without it
+if (typeof dayKey !== "function"){
+  window.dayKey = (date) => date.toLocaleDateString("en-CA");
+}
+
 let currentFilter = "all";   // all / pending / done / deleted
 let groupBy = "added";       // "added" = by the day you made it, "done" = by the day you finished it
 
@@ -17,6 +22,32 @@ function load(key){
   try { return JSON.parse(localStorage.getItem(key)) || []; }
   catch (e) { return []; }
 }
+
+function save(key, value){
+  try { localStorage.setItem(key, JSON.stringify(value)); }
+  catch (e) { alert("Couldn't save. Your browser storage might be full."); }
+}
+
+// small icons
+const ICON_EDIT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
+const ICON_NOTE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 13h8M8 17h5"/></svg>`;
+
+// save changes to one task in the history (and on the main list, if it's still there)
+function updateEntry(id, changes){
+  const log = load(LOG_KEY);
+  const entry = log.find(e => e.id === id);
+  if (!entry) return;
+  Object.assign(entry, changes);
+  save(LOG_KEY, log);
+
+  if (changes.text !== undefined){
+    const tasks = load(TASKS_KEY);
+    const task = tasks.find(t => t.id === id);
+    if (task){ task.text = changes.text; save(TASKS_KEY, tasks); }
+  }
+}
+
+let openEditorId = null; // which task's editor is open (only one at a time)
 
 // "Today", "Yesterday", or "Friday, October 16, 2026"
 function dayLabel(date){
@@ -55,6 +86,8 @@ function groupDate(entry){
 
 // ===== streak card =====
 function renderStreak(){
+  const card = document.querySelector(".streak-card");
+  if (typeof getStreak !== "function" || !card){ if (card) card.hidden = true; return; }
   const { current, best, days, doneToday } = getStreak();
   document.getElementById("streak-current").textContent = current;
   document.getElementById("streak-best").textContent =
@@ -95,7 +128,8 @@ function renderHistory(){
 
   const shown = log.filter(e => {
     if (currentFilter !== "all" && statusOf(e) !== currentFilter) return false;
-    if (!e.text.toLowerCase().includes(query)) return false;
+    const haystack = (e.text + " " + (e.note || "")).toLowerCase(); // search the note too
+    if (!haystack.includes(query)) return false;
     if (pickedDay){
       const d = groupDate(e);
       if (!d || dayKey(d) !== pickedDay) return false;
@@ -151,7 +185,11 @@ function makeRow(entry){
       <span class="task-text"></span>
       <span class="history-meta"></span>
     </div>
-    <span class="badge"></span>`;
+    <span class="badge"></span>
+    <div class="history-actions">
+      <button class="icon-btn note-btn" title="Journal note">${ICON_NOTE}</button>
+      <button class="icon-btn edit-btn" title="Edit">${ICON_EDIT}</button>
+    </div>`;
 
   li.querySelector(".task-text").textContent = entry.text; // textContent keeps it safe
 
@@ -163,7 +201,89 @@ function makeRow(entry){
 
   li.querySelector(".badge").textContent = { done: "Done", pending: "Pending", deleted: "Deleted" }[status];
   li.querySelector(".status-icon").textContent = { done: "✓", pending: "", deleted: "✕" }[status];
+
+  // the journal note, shown under the task
+  if (entry.note){
+    const note = document.createElement("div");
+    note.className = "history-note";
+    note.title = "Click to edit";
+    note.innerHTML = `<p class="note-text"></p><span class="note-time"></span>`;
+    note.querySelector(".note-text").textContent = entry.note; // line breaks kept by CSS
+    if (entry.noteUpdatedAt) note.querySelector(".note-time").textContent = `Note · ${formatDateTime(entry.noteUpdatedAt)}`;
+    note.addEventListener("click", () => openEditor(li, entry, "note"));
+    li.appendChild(note);
+  }
+  li.classList.toggle("has-note", !!entry.note);
+
+  li.querySelector(".note-btn").addEventListener("click", () => openEditor(li, entry, "note"));
+  li.querySelector(".edit-btn").addEventListener("click", () => openEditor(li, entry, "name"));
+
+  if (openEditorId === entry.id) openEditor(li, entry, "note"); // keep it open after re-render
   return li;
+}
+
+
+// inline editor: change the task name and write a journal note
+function openEditor(li, entry, focusOn){
+  // close any other open editor first
+  document.querySelectorAll(".history-editor").forEach(ed => {
+    if (ed.parentElement !== li) ed.closest("li").classList.remove("editing"), ed.remove();
+  });
+  if (li.querySelector(".history-editor")) return;
+  openEditorId = entry.id;
+
+  const editor = document.createElement("form");
+  editor.className = "history-editor";
+  editor.innerHTML = `
+    <label class="editor-label">Task</label>
+    <input class="editor-name" type="text" maxlength="200">
+    <label class="editor-label">Journal note</label>
+    <textarea class="editor-note" rows="4" placeholder="How did it go? Anything to remember?"></textarea>
+    <div class="editor-actions">
+      <span class="editor-hint">Ctrl + Enter to save · Esc to cancel</span>
+      <button type="button" class="editor-cancel">Cancel</button>
+      <button type="submit" class="editor-save">Save</button>
+    </div>`;
+
+  const nameInput = editor.querySelector(".editor-name");
+  const noteInput = editor.querySelector(".editor-note");
+  nameInput.value = entry.text;
+  noteInput.value = entry.note || "";
+
+  function close(){
+    openEditorId = null;
+    li.classList.remove("editing");
+    editor.remove();
+  }
+
+  editor.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const text = nameInput.value.trim();
+    if (!text){ nameInput.focus(); return; }  // a task needs a name
+    const note = noteInput.value.trim();
+
+    const changes = { text };
+    if (note !== (entry.note || "")){
+      changes.note = note;
+      changes.noteUpdatedAt = note ? new Date().toISOString() : null;
+    }
+    updateEntry(entry.id, changes);
+    openEditorId = null;
+    renderHistory();
+  });
+
+  editor.querySelector(".editor-cancel").addEventListener("click", close);
+  editor.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") close();
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) editor.requestSubmit();
+  });
+
+  // hide the note preview while editing, show the editor instead
+  li.classList.add("editing");
+  li.appendChild(editor);
+  const target = focusOn === "name" ? nameInput : noteInput;
+  target.focus();
+  target.setSelectionRange(target.value.length, target.value.length);
 }
 
 
