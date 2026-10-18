@@ -40,7 +40,7 @@ body {
      (if the image is missing, the purple-black color shows instead) */
   background:
     linear-gradient(rgba(12, 10, 24, 0.55), rgba(12, 10, 24, 0.8)),
-    url("miku.jpg") center / cover fixed,
+    url("quintupletss.jpg") center / cover fixed,
     #1a1530;
   -webkit-font-smoothing: antialiased;
 }
@@ -1436,3 +1436,176 @@ body.modal-open { overflow: hidden; }
 }
 
 .auth-reason[hidden] { display: none; }
+
+/* ===== New day greeting ===== */
+.newday-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  overflow-y: auto;
+  background: rgba(8, 6, 18, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: fade-in 0.25s ease-out;
+}
+
+.newday-overlay.closing { opacity: 0; transition: opacity 0.2s; }
+
+.newday-card {
+  position: relative;
+  width: min(440px, 100%);
+  padding: 30px 26px 22px;
+  text-align: center;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 50% -10%, rgba(251, 191, 36, 0.25), transparent 55%),
+    var(--card);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 22px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  animation: pop-up 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.newday-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.newday-close:hover { color: var(--text); background: var(--row-hover); }
+
+.newday-sun {
+  font-size: 54px;
+  line-height: 1;
+  animation: rise 0.8s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+@keyframes rise { from { opacity: 0; transform: translateY(20px) scale(0.8); } }
+
+.newday-date {
+  margin: 14px 0 2px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.newday-title { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
+.newday-sub { margin: 6px 0 16px; font-size: 15px; color: var(--muted); }
+
+.newday-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+  text-align: left;
+}
+
+.newday-chip {
+  padding: 8px 12px;
+  font-size: 13px;
+  background: var(--row);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.newday-form {
+  display: flex;
+  gap: 8px;
+  padding: 6px;
+  background: var(--row);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.newday-form:focus-within { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+
+.newday-input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 15px;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  outline: none;
+}
+
+.newday-input::placeholder { color: var(--muted); }
+
+.newday-add {
+  padding: 10px 18px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  background: var(--accent);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.newday-add:hover { background: var(--accent-hover); }
+
+.newday-added {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+  font-size: 14px;
+  color: var(--success);
+}
+
+.newday-added li { padding: 3px 4px; animation: slide-in 0.2s ease-out; }
+
+.newday-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.newday-remind {
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.newday-remind:hover:not(:disabled) { background: var(--row-hover); }
+.newday-remind:disabled { color: var(--success); cursor: default; }
+.newday-remind[hidden] { display: none; }
+
+.newday-done {
+  margin-left: auto;
+  padding: 10px 20px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.newday-done:hover { background: var(--accent); color: white; }
